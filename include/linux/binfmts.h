@@ -166,6 +166,8 @@ static inline bool task_is_booster(struct task_struct *tsk)
 	       !strcmp(comm, "perf@2.0-servic") ||
 	       !strcmp(comm, "perf@2.2-servic") ||
 	       !strcmp(comm, "perf2-hal-servi") ||
+	       !strcmp(comm, "power@2.0-servic") ||
+	       !strcmp(comm, "iop@") ||
 	       !strcmp(comm, "init.qcom.post_");
 }
 
