@@ -43,7 +43,11 @@ setup_kernelsu() {
     cd "$GKI_ROOT/KernelSU"
     git stash && echo "[-] Stashed current changes."
     if [ "$(git status | grep -Po 'v\d+(\.\d+)*' | head -n1)" ]; then
+<<<<<<< HEAD
         git checkout next && echo "[-] Switched to next branch."
+=======
+        git checkout susfs-next-4.19 && echo "[-] Switched to susfs-next-4.19 branch."
+>>>>>>> b3e6f32da0fd (KernelSU: Update to (12139))
     fi
     git pull && echo "[+] Repository updated."
     if [ -z "${1-}" ]; then
