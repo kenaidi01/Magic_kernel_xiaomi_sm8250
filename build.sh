@@ -1,36 +1,36 @@
 #!/bin/bash
 
-# Добавляем данные из настроек
+# Adding data from settings
 source ../settings.sh
 
-# Начало отсчета времени выполнения скрипта
+# Start of the script execution time count
 start_time=$(date +%s)
 
-# Удаление каталога "out", если он существует
+# Deleting the "out" directory if it exists
 rm -rf out
 
-# Основной каталог
-MAINPATH=/home/timisong # измените, если необходимо
+# Main directory
+MAINPATH=/home/Andrian # Change if necessary
 
-# Каталог ядра
-KERNEL_DIR=$MAINPATH/kernel
+# Kernel directory
+KERNEL_DIR=$MAINPATH/release
 KERNEL_PATH=$KERNEL_DIR/kernel_xiaomi_sm8250
 
-git log $LAST..HEAD > ../log.txt
+git log $LAST..HEAD > ../changelog.txt
 BRANCH=$(git branch --show-current)
 
-# Каталоги компиляторов
-CLANG19_DIR=$KERNEL_DIR/clang19
+# Compilation tools directories
+CLANG_DIR=$KERNEL_DIR/clang20
 ANDROID_PREBUILTS_GCC_ARM_DIR=$KERNEL_DIR/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9
 ANDROID_PREBUILTS_GCC_AARCH64_DIR=$KERNEL_DIR/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9
 
-# Проверка и клонирование, если необходимо
+# Check and clone if necessary
 check_and_clone() {
     local dir=$1
     local repo=$2
 
     if [ ! -d "$dir" ]; then
-        echo "Папка $dir не существует. Клонирование $repo."
+        echo "Directory $dir does not exist. Cloning $repo."
         git clone $repo $dir
     fi
 }
@@ -40,73 +40,73 @@ check_and_wget() {
     local repo=$2
 
     if [ ! -d "$dir" ]; then
-        echo "Папка $dir не существует. Клонирование $repo."
+        echo "Directory $dir does not exist. Cloning $repo."
         mkdir $dir
         cd $dir
         wget $repo
-        tar -zxvf Clang-19.0.0git-20240625.tar.gz
-        rm -rf Clang-19.0.0git-20240625.tar.gz
+        tar -zxvf Clang-20.0.0git-20241222.tar.gz
+        rm -rf Clang-20.0.0git-20241222.tar.gz
         cd ../kernel_xiaomi_sm8250
     fi
 }
 
-# Клонирование инструментов компиляции, если они не существуют
-check_and_wget $CLANG19_DIR https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-20240625-release/Clang-19.0.0git-20240625.tar.gz
+# Clone the compilation tools if they don't exist
+check_and_wget $CLANG_DIR https://github.com/ZyCromerZ/Clang/releases/download/20.0.0git-20241222-release/Clang-20.0.0git-20241222.tar.gz
 check_and_clone $ANDROID_PREBUILTS_GCC_ARM_DIR https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9
 check_and_clone $ANDROID_PREBUILTS_GCC_AARCH64_DIR https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9
 
-# Установка переменных PATH
-PATH=$CLANG19_DIR/bin:$ANDROID_PREBUILTS_GCC_AARCH64_DIR/bin:$ANDROID_PREBUILTS_GCC_ARM_DIR/bin:$PATH
+# Setting PATH variables
+PATH=$CLANG_DIR/bin:$ANDROID_PREBUILTS_GCC_AARCH64_DIR/bin:$ANDROID_PREBUILTS_GCC_ARM_DIR/bin:$PATH
 export PATH
 export ARCH=arm64
 
-# Каталог для сборки MagicTime
+# MagicTime build directory
 MAGIC_TIME_DIR="$KERNEL_DIR/MagicTime"
 
-# Создание каталога MagicTime, если его нет
+# Creating the MagicTime directory if it doesn't exist
 if [ ! -d "$MAGIC_TIME_DIR" ]; then
     mkdir -p "$MAGIC_TIME_DIR"
     
-    # Проверка и клонирование Anykernel, если MagicTime не существует
+    # Check and clone Anykernel if MagicTime doesn't exist
     if [ ! -d "$MAGIC_TIME_DIR/Anykernel" ]; then
         git clone https://github.com/TIMISONG-dev/Anykernel.git "$MAGIC_TIME_DIR/Anykernel"
         
-        # Перемещение всех файлов из Anykernel в MagicTime
+        # Moving all files from Anykernel to MagicTime
         mv "$MAGIC_TIME_DIR/Anykernel/"* "$MAGIC_TIME_DIR/"
         
-        # Удаление папки Anykernel
+        # Deleting the Anykernel folder
         rm -rf "$MAGIC_TIME_DIR/Anykernel"
     fi
 else
-    # Если папка MagicTime существует, проверить наличие .git и удалить, если есть
+    # If MagicTime exists, check for the .git folder and remove it if it exists
     if [ -d "$MAGIC_TIME_DIR/.git" ]; then
         rm -rf "$MAGIC_TIME_DIR/.git"
     fi
 fi
 
-# Экспорт переменных среды
+# Exporting environment variables
 export IMGPATH="$MAGIC_TIME_DIR/Image"
 export DTBPATH="$MAGIC_TIME_DIR/dtb"
 export DTBOPATH="$MAGIC_TIME_DIR/dtbo.img"
 export CROSS_COMPILE="aarch64-linux-gnu-"
 export CROSS_COMPILE_COMPAT="arm-linux-gnueabi-"
-export KBUILD_BUILD_USER="TIMISONG"
-export KBUILD_BUILD_HOST="timisong-dev"
-export MODEL="alioth"
+export KBUILD_BUILD_USER="Andrian"
+export KBUILD_BUILD_HOST="andrian-dev"
+export MODEL="andrian"
 
-# Запись времени сборки
+# Recording the build time
 MAGIC_BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 
-# Каталог для результатов сборки
+# Output directory for build results
 output_dir=out
 
-# Конфигурация ядра
+# Kernel configuration
 make O="$output_dir" \
-            alioth_defconfig \
+            ${DEVICE}_defconfig \
             vendor/xiaomi/sm8250-common.config
 
-    # Компиляция ядра
-    make -j $(nproc) \
+# Kernel compilation
+make -j $(nproc) \
                 O="$output_dir" \
                 CC="ccache clang" \
                 HOSTCC=gcc \
@@ -119,55 +119,30 @@ make O="$output_dir" \
                 STRIP=llvm-strip \
                 LLVM=1 \
                 LLVM_IAS=1 \
-                V=$VERBOSE 2>&1 | tee error.log
-                
+                V=$VERBOSE 2>&1 | tee build.log
 
-# Предполагается, что переменная DTS установлена ранее в скрипте
+
+# Assuming the DTS variable is set earlier in the script
 find $DTS -name '*.dtb' -exec cat {} + > $DTBPATH
 find $DTS -name 'Image' -exec cat {} + > $IMGPATH
 find $DTS -name 'dtbo.img' -exec cat {} + > $DTBOPATH
 
-# Завершение отсчета времени выполнения скрипта
+# End of the script execution time count
 end_time=$(date +%s)
 elapsed_time=$((end_time - start_time))
 
 cd "$KERNEL_PATH"
 
-# Проверка успешности сборки
-if grep -q -E "Ошибка 2|Error 2" error.log; then
+# Checking the success of the build
+if grep -q -E "Ошибка 2|Error 2" build.log; then
     cd "$KERNEL_PATH"
-    echo "Ошибка: Сборка завершилась с ошибкой"
+    echo "Error: The build finished with an error"
 
-    curl -s -X POST https://api.telegram.org/bot$TGTOKEN/sendMessage \
-    -d chat_id="@magictimekernel" \
-    -d text="Ошибка в компиляции!" \
-    -d message_thread_id="38153"
-
-    curl -s -X POST "https://api.telegram.org/bot$TGTOKEN/sendDocument?chat_id=@magictimekernel" \
-    -F document=@"./error.log" \
-    -F message_thread_id="38153"
 else
-    echo "Общее время выполнения: $elapsed_time секунд"
-    # Перемещение в каталог MagicTime и создание архива
+    echo "Total execution time: $elapsed_time seconds"
+    # Moving to the MagicTime directory and creating an archive
     cd "$MAGIC_TIME_DIR"
-    7z a -mx9 MagicTime-$MODEL-$MAGIC_BUILD_DATE.zip * -x!*.zip
-    
-    curl -s -X POST https://api.telegram.org/bot$TGTOKEN/sendMessage \
-    -d chat_id="@magictimekernel" \
-    -d text="Компиляция завершилась успешно! Время выполнения: $elapsed_time секунд" \
-    -d message_thread_id="38153"
-
-    curl -s -X POST "https://api.telegram.org/bot$TGTOKEN/sendDocument?chat_id=@magictimekernel" \
-    -F document=@"./MagicTime-$MODEL-$MAGIC_BUILD_DATE.zip" \
-    -F caption="MagicTime ${VERSION}${PREFIX}${BUILD} (${BUILD_TYPE})" \
-    -F message_thread_id="38153"
-    
-    curl -s -X POST "https://api.telegram.org/bot$TGTOKEN/sendDocument?chat_id=@magictimekernel" \
-    -F document=@"../log.txt" \
-    -F caption="Latest changes" \
-    -F message_thread_id="38153"
-
-    rm -rf MagicTime-$MODEL-$MAGIC_BUILD_DATE.zip
+    7z a -mx9 MagicTime-$DEVICE-$MAGIC_BUILD_DATE.zip * -x!*.zip
 
     BUILD=$((BUILD + 1))
 

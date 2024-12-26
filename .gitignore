@@ -151,3 +151,5 @@ Android.bp
 
 # Error log
 error.log
+build.log
+build.sh
