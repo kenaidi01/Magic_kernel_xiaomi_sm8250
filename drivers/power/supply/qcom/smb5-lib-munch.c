@@ -23,6 +23,9 @@
 #ifdef CONFIG_DUAL_FUEL_GAUGE_BQ27Z561
 #include "dual_fuel_gauge_class.h"
 #endif
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
 
 #define smblib_err(chg, fmt, ...)	do {} while (0)
 
