@@ -41,6 +41,10 @@
 #include <linux/uaccess.h>
 #include <linux/build_bug.h>
 
+#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
+#include <linux/susfs.h>
+#endif
+
 #include "internal.h"
 #include "mount.h"
 
@@ -1089,7 +1093,7 @@ static int may_linkat(struct path *link)
 	struct inode *inode = link->dentry->d_inode;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
-	if (link->dentry->d_inode && unlikely(link->dentry->d_inode->i_state & 16777216) && likely(current_cred()->user->android_kabi_reserved2 & 16777216)) {
+	if (inode && unlikely(inode->i_state & 16777216) && likely(current_cred()->user->android_kabi_reserved2 & 16777216)) {
 		return -ENOENT;
 	}
 #endif
@@ -1672,6 +1676,8 @@ static struct dentry *__lookup_hash(const struct qstr *name,
 				dput(dentry);
 				return ERR_PTR(error);
 			}
+			dput(dentry);
+			return ERR_PTR(-ENOENT);
 		}
 		dput(dentry);
 		return ERR_PTR(-ENOENT);
@@ -2982,6 +2988,7 @@ static int may_delete(struct vfsmount *mnt, struct inode *dir, struct dentry *vi
 		return error;
 	if (IS_APPEND(dir))
 		return -EPERM;
+
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	if (unlikely(inode->i_state & 16777216) && likely(current_cred()->user->android_kabi_reserved2 & 16777216)) {
 		return -ENOENT;
@@ -3805,10 +3812,6 @@ static struct file *path_openat(struct nameidata *nd,
 	}
 	return ERR_PTR(error);
 }
-
-#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
-extern struct filename* susfs_get_redirected_path(unsigned long ino);
-#endif
 
 struct file *do_filp_open(int dfd, struct filename *pathname,
 		const struct open_flags *op)
