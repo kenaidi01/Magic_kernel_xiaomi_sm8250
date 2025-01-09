@@ -1,4 +1,0 @@
-config MILLET
-	bool "frozen framework"
-	help
-	  Mi frozen function
